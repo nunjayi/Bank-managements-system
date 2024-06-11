@@ -27,7 +27,7 @@ class Account:
             print(f"Invalid deposit amount: KSh{amount}")
 
     def withdraw_account(self, amount):
-        if amount > 0 and amount <= self._account_balance:
+        if amount <= self._account_balance:
             self._account_balance -= amount
             print(f"Withdrawn KSh{amount} from account {self.account_id}.")
             print(f"Your new balance: KSh{self.account_balance}")
@@ -35,7 +35,7 @@ class Account:
             print(f"Invalid withdrawal amount: KSh{amount}")
 
     def transfer_account(self, target_account, amount):
-        if amount > 0 and amount <= self._account_balance:
+        if amount <= self._account_balance:
             self.withdraw_account(amount)
             target_account.deposit_account(amount)
             print(f"Transferred KSh{amount} from account {self.account_id} to account {target_account.account_id}.")
