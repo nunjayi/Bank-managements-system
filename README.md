@@ -32,13 +32,9 @@ An implementation of a bank management system
         1. branches
         2. accounts
         3. managers
+        4. balance
 
-        Bank properties:
-        1. debit_balance
-            Returns overall debit_balance
-            debit_balance must be of type float
 
-        Should be able to change after the bank is instantiated
 
     Manager:
         Manager __init__(name,branch_assigned)
