@@ -5,7 +5,7 @@ class Branch:
         self.name = name
         self.asset_balance = asset_balance
         self.accounts = []
-        self.users = []  
+        self.users = []
 
     def add_account(self, account):
         self.accounts.append(account)
@@ -41,6 +41,37 @@ class Branch:
             return account.account_balance
         else:
             return None
+
+    def calculate_total_asset_balance(self):
+        total_balance = sum(account.account_balance for account in self.accounts)
+        self.asset_balance = total_balance
+        return self.asset_balance
+
+    def update_asset_balance(self, account_id, transaction_type, amount):
+        account = self.query_account(account_id)
+        if not account:
+            return False
+
+        if transaction_type == 'deposit':
+            account.deposit_account(amount)
+            self.asset_balance += amount
+        elif transaction_type == 'withdrawal':
+            if account.withdraw_account(amount):
+                self.asset_balance -= amount
+            else:
+                return False
+        return True
+
+    def get_asset_balance(self):
+        return self.asset_balance
+
+    def get_financial_summary(self):
+        return {
+            'branch_id': self.branch_id,
+            'name': self.name,
+            'total_asset_balance': self.asset_balance,
+            'number_of_accounts': len(self.accounts)
+        }
 
     def __str__(self):
         return f"Branch(ID: {self.branch_id}, Name: {self.name}, Asset Balance: {self.asset_balance})"
