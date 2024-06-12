@@ -16,7 +16,7 @@ class Transaction:
         Transaction.transaction_counter += 1
 
     def add_transaction(self):
-        # Here you would add the transaction to your database or file instead of printing
+        #add to database
         if self.transaction_type == 'Transfer Out':
            print(f'New transaction: ID {self.transaction_id}\n'
                  f'Account {self.account_id} of User {self.user_id} has sent KSh{self.amount} to account {self.target_account_id} of User {self.target_user_id}\n'
