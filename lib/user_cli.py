@@ -17,6 +17,7 @@ def main():
         choice = input("> ")
         if choice == "0":
             exit()
+            break
         elif choice == "1":
             create_user()
         elif choice == "2":
@@ -35,11 +36,11 @@ def main():
 def menu():
     print("Please select an option:")
     print("0. Exit the program")
-    print("1 create a user account")
-    print("2. create a bank account")
-    print("3 deposit funds")
-    print("4 check balance")
-    print("5 withdraw funds")
+    print("1. Create a User Account")
+    print("2. Create a Bank Account")
+    print("3. Deposit funds")
+    print("4. Check balance")
+    print("5. Withdraw funds")
    
   
 
