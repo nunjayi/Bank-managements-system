@@ -1,36 +1,66 @@
 from datetime import datetime
-
-class Account:
-    account_counter = 1
-
-    def __init__(self, account_type, initial_deposit, user_id):
-        self.account_type = account_type
-        self.balance = initial_deposit
-        self.account_id = Account.account_counter
-        self.account_no = self.generate_account_no(user_id)
-        Account.account_counter += 1
-
-    def generate_account_no(self, user_id):
-        date_str = datetime.now().strftime("%Y%m%d")
-        return f"{self.account_id:04d}-{user_id:04d}-{date_str}"
-
-    def __str__(self):
-        return f"Account({self.account_type}, {self.balance}, {self.account_no})"
-
+from Models.__init__ import CONN, CURSOR
+from Models.account import Account
+from Models.transaction import Transaction
 class User:
-    user_counter = 1
+    all = {}
 
-    def __init__(self, name, password):
+    def __init__(self, name, password,user_id = None):
         self.name = name
         self.password = password
-        self._user_id = User.user_counter
         self.accounts = []
         self.loans = []
-        User.user_counter += 1
+        
 
     @property
     def user_id(self):
         return self._user_id
+    
+
+    @classmethod
+    def create_table(cls):
+
+        sql = """
+            CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            name TEXT,
+            password TEXT)
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+
+    @classmethod
+    def drop_table(cls):
+ 
+        sql = """
+            DROP TABLE IF EXISTS users;
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+    def save(self):
+  
+        sql = """
+            INSERT INTO users (name, password)
+            VALUES (?, ?)
+        """
+
+        CURSOR.execute(sql, (self.name, self.password))
+        CONN.commit()
+
+        self.branch_id = CURSOR.lastrowid
+        type(self).all[self.branch_id] = self
+
+    @classmethod
+    def create(cls, name, password):
+        """ Initialize a new Department instance and save the object to the database """
+        branch = cls(name, password)
+        branch.save()
+        return branch
+
+
+
+    
+    
 
     def open_account(self, account_type, initial_deposit):
         account = Account(account_type, initial_deposit, self.user_id)

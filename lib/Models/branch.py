@@ -1,11 +1,58 @@
+from Models.__init__ import CONN, CURSOR
 class Branch:
-    def __init__(self, branch_id, manager_id, name, asset_balance):
+    #all objects saved in the database
+    all = {}
+    def __init__(self, name,manager_id, branch_id = None,  asset_balance = 0):
         self.branch_id = branch_id
         self.manager_id = manager_id
         self.name = name
         self.asset_balance = asset_balance
         self.accounts = []
         self.users = []
+
+    @classmethod
+    def create_table(cls):
+
+        sql = """
+            CREATE TABLE IF NOT EXISTS branches (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            asset_balance REAL)
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+
+    @classmethod
+    def drop_table(cls):
+ 
+        sql = """
+            DROP TABLE IF EXISTS branches;
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+    def save(self):
+  
+        sql = """
+            INSERT INTO branches (Name, Asset_balance)
+            VALUES (?, ?)
+        """
+
+        CURSOR.execute(sql, (self.name, self.asset_balance))
+        CONN.commit()
+
+        self.branch_id = CURSOR.lastrowid
+        type(self).all[self.branch_id] = self
+
+    @classmethod
+    def create(cls, name, asset_balance):
+        """ Initialize a new Department instance and save the object to the database """
+        branch = cls(name, asset_balance)
+        branch.save()
+        return branch
+
+
+
+    
 
     def add_account(self, account):
         self.accounts.append(account)
@@ -18,7 +65,6 @@ class Branch:
                 self.accounts.remove(account)
                 return True
         return False
-
     def add_user(self, user):
         self.users.append(user)
 
