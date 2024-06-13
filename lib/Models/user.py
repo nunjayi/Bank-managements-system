@@ -129,3 +129,11 @@ class User:
     def apply_loan(self, loan_amount):
         self.loans.append(loan_amount)
         print(f"Loan of {loan_amount} applied for {self.name}")
+    def link_account(self, account_id):
+        sql = """
+            UPDATE accounts
+            SET user_id = ?
+            WHERE account_id = ?
+            """
+        CURSOR.execute(sql, (self.user_id, account_id))
+        CONN.commit()
