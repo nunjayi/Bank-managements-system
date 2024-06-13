@@ -1,7 +1,7 @@
+from Models.__init__ import CONN, CURSOR
 from Models.transaction import Transaction
 
 class Account:
-    account_counter = 1
 
     def __init__(self, account_id=None, user_id=None, branch_id=None, account_type=None, account_balance=0):
         self._account_id = Account.account_counter if account_id is None else account_id
@@ -9,8 +9,49 @@ class Account:
         self.branch_id = branch_id # INT FK
         self.account_type = account_type # TEXT
         self._account_balance = account_balance # FLOAT
-        if account_id is None:
-            Account.account_counter += 1
+        
+    @classmethod
+    def create_table(cls):
+
+        sql = """
+            CREATE TABLE IF NOT EXISTS Accounts (
+            account_id INTEGER PRIMARY KEY,
+            account_type TEXT,
+            account_balance)
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+
+    @classmethod
+    def drop_table(cls):
+ 
+        sql = """
+            DROP TABLE IF EXISTS users;
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+    def save(self):
+  
+        sql = """
+            INSERT INTO users (name, password)
+            VALUES (?, ?)
+        """
+
+        CURSOR.execute(sql, (self.name, self.password))
+        CONN.commit()
+
+        self.branch_id = CURSOR.lastrowid
+        type(self).all[self.branch_id] = self
+
+    @classmethod
+    def create(cls, name, password):
+        """ Initialize a new Department instance and save the object to the database """
+        branch = cls(name, password)
+        branch.save()
+        return branch
+
+
+    
     
     @property
     def account_balance(self):

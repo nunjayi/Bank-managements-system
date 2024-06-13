@@ -7,8 +7,8 @@ def exit():
 
 # We'll implement the user functions in this lesson
 def create_user():
-    name = input ("Enter the department's name: ")
-    location = input("Enter the department's location: ")
+    name = input ("Enter the user's name: ")
+    location = input("Enter the users's password: ")
     try:
         user = User.create(name, location)
         print(f'Success: {user}')
