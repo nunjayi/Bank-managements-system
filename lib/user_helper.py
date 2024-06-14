@@ -1,98 +1,123 @@
-#!/usr/bin/env python3
-
-from Models.account import Account
+from Models.__init__ import CONN, CURSOR
+from Models.branch import Branch
+from Models.account  import Account
+from Models.manager import Manager
 from Models.user import User
-def exit():
-    print("Thank you! for visiting us.")
+from Models.transaction import Transaction
 
+
+def exit_program():
+    print("Thank you for transacting with us")
+    exit()
+
+# We'll implement the department functions in this lesson
 
 def create_user():
-    name = input ("Enter the user's name: ")
-<<<<<<< HEAD
-    location = input("Enter the users's password: ")
-=======
-    password = input("Enter the user's password: ")
->>>>>>> bdedd5ef9e3c96b5fdba8b298514190cc0ddcbdf
+    name = input("Enter the user name > ")
+    password = input("Enter the password > ")
+    branch_id = input("Enter the branch id > ")
     try:
-        user = User.create(name, password)
-        user_id = user.user_id
-        print(f'Successfully created user: {user_id}')
+        User.create_table()
+        user = User.create_user_account(name,password,branch_id)
+        print(f'Success: {user}')
     except Exception as exc:
-        print("Error creating user:", exc)
-
-def create_account():
-    user_id = input('Enter the user ID: ')
-    branch_id = input('Enter the branch ID: ')
-    account_type = input('Enter the account type: ')
+        print("Error creating user: ", exc)
+    pass
+######################################## CREATE BANK ACCOUNT
+def create_bank_account ():
+    type = input("Enter the type of account (savings , checking) > ")
+    user_id = input("Enter the user id > ")
+    deposit = input("Enter your  first deposit > ")
 
     try:
-        user = User.get_by_id(user_id)
-        if not user:
-            print(f"User with ID {user_id} not found")
-            return
-        
-        initial_deposit = float(input('Enter the initial deposit amount (minimum KSh5000): '))
-        if initial_deposit < 5000:
-            print("Initial deposit must be at least KSh5000")
-            return
-        
-        account = Account.create(user.user_id, branch_id, account_type, initial_deposit)
-        print(f'Successfully created account ID {account.account_id} for User {user_id}.')
-        print(f"Initial deposit of KSh{initial_deposit} successfully made.")
-
+        Account.create_user_account(type,int(user_id),int(deposit))
+        print(f'Success !!!!!')
     except Exception as exc:
-        print("Error creating account:", exc)
+        print("Error creating account: ", exc)
+
+    
+def account_balance():
+    account_id = input("Enter your account id > ")
+    Account.Check_balance(account_id)
+    pass
 
 def deposit_funds():
-    account_id = input('Enter your account ID: ')
-    amount = float(input('Enter the amount to deposit: '))
 
-    try:
-        account = Account.get_by_id(account_id)
-        if not account:
-            print(f"Account with ID {account_id} not found")
-            return
-        
-        account.deposit_account(amount)
-        print (f'Successfully deposited KSh{amount} into account ID {account_id}')
-    except Exception as exc:
-        print("Error depositing funds:", exc)
-
-def check_balance():
-    print('balance')
-    pass
-
-def transfer_funds():
-    sender_account_id = input("Enter sender's account ID: ")
-    receiver_account_id = input("Enter receiver's account ID: ")
-    amount = float(input("Enter amount to transfer: "))
-    transaction_id = input("Enter transaction ID: ")
-
-    try:
-        sender_account = Account.get(sender_account_id)
-        receiver_account = Account.get(receiver_account_id)
-        
-        if not sender_account or not receiver_account:
-            raise ValueError("Sender or receiver account not found")
-
-        if sender_account.account_id == receiver_account.account_id:
-            raise ValueError("Sender and receiver accounts cannot be the same")
-
-        if sender_account.balance < amount:
-            raise ValueError("Insufficient funds for transfer")
-
-        sender_account.transfer_account(receiver_account, amount)
-        print(f'Transaction ID: {transaction_id} - Transferred {amount} from {sender_account_id} to {receiver_account_id}')
-        print(f'Transfer successful. Sender balance: {sender_account.balance}, Receiver balance: {receiver_account.balance}')
-    
-    except ValueError as ve:
-        print(f"Error transferring funds: {ve}")
-    
-    except Exception as exc:
-        print(f"Error transferring funds: {exc}")
-
+    id = input("Enter your account id > ")
+    amount  = input("Enter the amount to deposit > ")
+    if account := Account.find_by_id(id):
+        try:
+            
+            account.asset_balance += int(amount)
+            print(f"your previous balance was ->{account.asset_balance}")
+            print(amount)
+            account.deposit(account.asset_balance,int(amount),id)
+            print(f'Success: {account}')
+        except Exception as exc:
+            print("Error updating department: ", exc)
+    else:
+        print(f'Account {id} not found')
 
 def withdraw_funds():
-    print('withdraw')
+    
+    id = input("Enter your account id > ")
+    amount  = input("Enter the amount to withdraw > ")
+    if account := Account.find_by_id(id):
+        try:
+           if account.asset_balance > int(amount):
+                account.asset_balance -= int(amount)
+                print(f"your previous balance was ->{account.asset_balance}")
+                print(amount)
+                account.withdraw(account.asset_balance,int(amount),id)
+                print(f'Success: {account}')
+        except Exception as exc:
+            print("Error updating department: ", exc)
+    else:
+        print(f'Account {id} not found')
     pass
 
+
+def transfer_funds():
+
+    ###enter details
+    sender_id = input("Enter your account id - > ")
+    send_amount = input("How much do you wish to send - > ")
+    #sender id + amount
+    receive_id = input("Send to ACCOUNT_ID - > ")
+    ################ withdraw
+    if a_sender_account := Account.find_by_id(sender_id):
+        try:
+           if a_sender_account.asset_balance > int(send_amount):
+                a_sender_account.asset_balance -= int(send_amount)
+                print(f"your previous balance was ->{a_sender_account.asset_balance}")
+                a_sender_account.withdraw(a_sender_account.asset_balance,int(send_amount),sender_id)
+                print(f'Success: {a_sender_account}')
+        except Exception as exc:
+            print("Error updating department: ", exc)
+        
+    else:
+        print(f'Account {id} not found')
+    
+  ################## deposit
+    #reciever
+    if receive_account := Account.find_by_id(receive_id):
+        try:
+                
+            receive_account.asset_balance += int(send_amount)
+            print(f"sending {send_amount} to {receive_account}")
+            receive_account.deposit(receive_account.asset_balance,int(send_amount),receive_id)
+            print(f'Success: {receive_account}')
+        except Exception as exc:
+                print("Error updating department: ", exc)
+        else:
+            print(f'Account {id} not found')
+    pass
+def apply_loan():
+    id = input("Enter your account id - > ")
+    amount = input("How much do you want - > ")
+    Account.apply_loan(id,amount)
+
+    pass
+def check_ministatement():
+    id = input("Enter your account id - > ")
+    Transaction.ministatement(id)

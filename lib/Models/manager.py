@@ -1,89 +1,97 @@
-from Models.__init__ import CONN, CURSOR
+from Models.__init__ import CURSOR, CONN
+from Models.transaction import Transaction
+from Models.account import Account
+from Models.user import User
+from Models.branch import Branch
 class Manager:
-    def init(self, name, branch_assigned, employee_id = None):
-        self.name = name
-        self.branch_assigned = branch_assigned
+    all = {}
+    def __init__(self,name, branch_id,employee_id = None,):
         self.employee_id = employee_id
-        self.accounts_managed = []
+        self.name = name
+        self.branch_id = branch_id
+        
+    #### properties
+    
+    @property
+    def name(self):
+        return self._name
 
+    @name.setter
+    def name(self, name):
+        if isinstance(name, str) and len(name):
+            self._name = name
+        else:
+            raise ValueError(
+                "name must be a non-empty string"
+            )
 
+    @property
+    def branch_id(self):
+        return self._branch_id
+
+    @branch_id.setter
+    def branch_id(self, branch_id):
+        if isinstance(branch_id, int): 
+            self._branch_id = branch_id
+        else:
+            raise ValueError(
+                "branch_id must be a integer"
+            )
+        
+    ## @classmethod
     @classmethod
     def create_table(cls):
-
+        """ Create a new table to persist the attributes of table instances """
         sql = """
-            CREATE TABLE IF NOT EXISTS managers (
+            CREATE TABLE IF NOT EXISTS Managers (
             employee_id INTEGER PRIMARY KEY,
             name TEXT,
-            )
+            branch_id INTEGER)
+        """
+        CURSOR.execute(sql)
+        CONN.commit()
+##drop table
+    @classmethod
+    def drop_table(cls):
+        """ Drop the table that persists Department instances """
+        sql = """
+            DROP TABLE IF EXISTS Managers;
         """
         CURSOR.execute(sql)
         CONN.commit()
 
-    @classmethod
-    def drop_table(cls):
- 
+    
+    ### crud methods
+    
+    ## create
+    ## (hire manager)
+    def hire_manager(self):
+        """ Insert a new row with the name and location values of the current Department instance.
+        Update object id attribute using the primary key value of new row.
+        Save the object in local dictionary using table row's PK as dictionary key"""
         sql = """
-            DROP TABLE IF EXISTS managers;
-        """
-        CURSOR.execute(sql)
-        CONN.commit()
-    def save(self):
-  
-        sql = """
-            INSERT INTO managers (Name, Asset_balance)
+            INSERT INTO Managers (name, branch_id)
             VALUES (?, ?)
         """
 
-        CURSOR.execute(sql, (self.name, self.asset_balance))
+        CURSOR.execute(sql, (self.name, self.branch_id))
         CONN.commit()
 
-        self.branch_id = CURSOR.lastrowid
-        type(self).all[self.branch_id] = self
+        self.id = CURSOR.lastrowid
+        type(self).all[self.id] = self
 
+    ## read
+    def search_manager(self):
+        pass
+
+    ## account_info(to approve loans)
+    ### 
     @classmethod
-    def create(cls, name, asset_balance):
-        """ Initialize a new Department instance and save the object to the database """
-        branch = cls(name, asset_balance)
-        branch.save()
-        return branch
-
-
-
-
-
-
-@property
-def account_managed(self):
- return [ account for account in bank.accounts if account["branch"] == self.branch_assigned]  
-
-def query_users(self):
-    for account in self.accounts_managed:
-        print(f":Account Number: {account['account_number']}, Asset Balance: {account['asset_balance']}") 
-
-def query_transactions(self):
-    for transaction in bank.transaction:
-        if transaction["account_number"] in [account["account_number"] for account in self.accounts_managed]:
-           print(f"Account Number: {transaction['account_number']},Amount: {transaction['amount']},Transaction Type: {transaction['transactio_type']}")         
-
-def get_branch_balance(self):
-    total_balance = sum(account["asset_balance"] for account in self.account_managed)
-    print(f"Branch Balance: {total_balance}")
-    
-def approve_loan(self, account_number, loan_amount):
-    for account in bank.accounts:
-        if account["account_number"] == account_number:
-            account["balance"] += loan_amount
-            print(f"Loan of {loan_amount} approved for account {account_number}")
-            return
-        print("Account not found")
-
-def debit_account(self, account_number, loan_amount):
-    for account in bank.accounts:
-        if account["account_number"] ==account_number:
-            if account["balance"] >= loan_amount:
-                account["balance"] -= loan_amount
-                print(f"debited {loan_amount} from account {account_number}")  
-                return
-            print("Insufficient balance")
-            return
-        print("Account not found")
+    def bank_balance(cls):
+        credits = Transaction.credits()
+        debits = Transaction.debits()
+        asset_balance = credits - debits
+        print(asset_balance)
+        return asset_balance
+    ## delete
+    ##(fire/release_manager 

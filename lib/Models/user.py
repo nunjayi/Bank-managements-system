@@ -1,131 +1,113 @@
-from datetime import datetime
-import sqlite3
-from Models.__init__ import CONN, CURSOR
-from Models.account import Account
-from Models.transaction import Transaction
+from Models.__init__ import CURSOR, CONN
+
 
 class User:
-    def __init__(self, name, password, user_id=None):
-        self._user_id = user_id
+    all = {}
+    def __init__(self,name,password , branch_id,user_id = None,):
+        self.user_id = user_id
         self.name = name
         self.password = password
-        self.accounts = []
-        self.loans = []
+        self.branch_id = branch_id
         
-
+        
+        
+    #### properties
+    
     @property
-    def user_id(self):
-        return self._user_id    
+    def name(self):
+        return self._name
 
+    @name.setter
+    def name(self, name):
+        if isinstance(name, str) and len(name):
+            self._name = name
+        else:
+            raise ValueError(
+                "name must be a non-empty string"
+            )
+
+
+
+    ### CLASS METHODS
     @classmethod
     def create_table(cls):
-
+        """ Create a new table to persist the attributes of table instances """
         sql = """
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS Users (
             user_id INTEGER PRIMARY KEY,
             name TEXT,
-            password TEXT)
+            password TEXT,
+            branch_id INTEGER
+            )
         """
         CURSOR.execute(sql)
         CONN.commit()
 
     @classmethod
     def drop_table(cls):
- 
+        """ Drop the table that persists Department instances """
         sql = """
-            DROP TABLE IF EXISTS users;
+            DROP TABLE IF EXISTS Users;
         """
         CURSOR.execute(sql)
         CONN.commit()
-    def save(self):
-  
+
+    ### crud methods
+
+    ## create_user
+    def create_user(self):
+        """ Insert a new row with the name and location values of the current Department instance.
+        Update object id attribute using the primary key value of new row.
+        Save the object in local dictionary using table row's PK as dictionary key"""
         sql = """
-            INSERT INTO users (name, password)
-            VALUES (?, ?)
+            INSERT INTO Users(name, password,branch_id)
+            VALUES (?, ? ,?)
         """
 
-        CURSOR.execute(sql, (self.name, self.password))
+        CURSOR.execute(sql, (self.name, self.password,self.branch_id))
         CONN.commit()
-        self._user_id = CURSOR.lastrowid
 
+        self.id = CURSOR.lastrowid
+        type(self).all[self.id] = self
+
+        ##creating users
     @classmethod
-    def create(cls, name, password):
-        """ Initialize a new Department instance and save the object to the database """
-        user = cls(name, password)
-        user.save()
-        return user  
+    def create_user_account(cls, name, password, branch_id):
+        """ Initialize a new Employee instance and save the object to the database """
+        user = cls(name, password, branch_id)
+        user.create_user()
+        return user
     
+
+    ## reading elements(find from db)
     @classmethod
-    def get_by_id(cls, user_id):
-        """ Get a User instance from the database """
+    def instance_from_db(cls, row):
+        """Return a user object having the attribute values from the table row."""
+
+        # Check the dictionary for an existing instance using the row's primary key
+        user = cls.all.get(row[0])
+        if user:
+            # ensure attributes match row values in case local instance was modified
+            user.name = row[1]
+            user.password = row[2]
+            user.Branch_id = row[3]
+        else:
+            # not in dictionary, create new instance and add to dictionary
+            user = cls(row[1], row[2],row[3])
+            user.id = row[0]
+            cls.all[user.id] = user
+        return user
+
+    ## search by id
+    @classmethod
+    def find_by_id(cls, id):
+        """Return a user object corresponding to the table row matching the specified primary key"""
         sql = """
-            SELECT * FROM users WHERE user_id =?
+            SELECT *
+            FROM Users
+            WHERE user_id = ?
         """
-        CURSOR.execute(sql, (user_id,))
-        row = CURSOR.fetchone()
-        if row:
-            user = cls(row[1], row[2], row[0])
-            return user
-        else:
-            return None
 
-    def open_account(self, account_type, initial_deposit):
-        account = Account.create(self.user_id, branch_id=None, account_type=account_type, initial_balance=initial_deposit)
-        self.accounts.append(account)
-        print(f"Account with ID {account.account_id} and Account No {account.account_no} opened for {self.name} with balance {account.balance}")
-
-    def close_account(self, account_id):
-        account_to_close = next((acct for acct in self.accounts if acct.account_id == account_id), None)
-        if account_to_close:
-            self.accounts.remove(account_to_close)
-            print(f"Account with ID {account_id} closed for {self.name}")
-        else:
-            print(f"Account with ID {account_id} not found")
-
-    def deposit(self, account_id, amount):
-        account = next((acct for acct in self.accounts if acct.account_id == account_id), None)
-        if account:
-            account.balance += amount
-            print(f"Deposited {amount} to account ID {account_id}. New balance: {account.balance}")
-        else:
-            print(f"Account with ID {account_id} not found")
-
-    def withdraw(self, account_id, amount):
-        account = next((acct for acct in self.accounts if acct.account_id == account_id), None)
-        if account:
-            if account.balance >= amount:
-                account.balance -= amount
-                print(f"Withdrew {amount} from account ID {account_id}. New balance: {account.balance}")
-            else:
-                print("Insufficient funds")
-        else:
-            print(f"Account with ID {account_id} not found")
-
-    def check_balance(self, account_id):
-        account = next((acct for acct in self.accounts if acct.account_id == account_id), None)
-        if account:
-            print(f"Balance for account ID {account_id} is {account.balance}")
-            return account.balance
-        else:
-            print(f"Account with ID {account_id} not found")
-            return None
-
-    def transfer(self, source_account_id, target_account_id, amount):
-        source_account = next((acct for acct in self.accounts if acct.account_id == source_account_id), None)
-        target_account = next((acct for acct in self.accounts if acct.account_id == target_account_id), None)
-        if source_account and target_account:
-            if source_account.balance >= amount:
-                source_account.balance -= amount
-                target_account.balance += amount
-                print(f"Transferred {amount} from account ID {source_account_id} to account ID {target_account_id}")
-            else:
-                print("Insufficient funds")
-        else:
-            if not source_account:
-                print(f"Source account with ID {source_account_id} not found")
-            if not target_account:
-                print(f"Target account with ID {target_account_id} not found")
-
-    def apply_loan(self, loan_amount):
-        self.loans.append(loan_amount)
-        print(f"Loan of {loan_amount} applied for {self.name}")
+        row = CURSOR.execute(sql, (id,)).fetchone()
+        print(row)
+        return cls.instance_from_db(row) if row else None

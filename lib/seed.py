@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 from Models.__init__ import CONN, CURSOR
+from Models.branch import Branch
+from Models.account  import Account
+from Models.manager import Manager
 from Models.user import User
+from Models.transaction import Transaction
 
 def seed_database():
-    User.drop_table()
-    User.create_table()
+    ## create tables
+    Account.apply_loan(1,2000)
+    pass
 
-    joe = User.create("joe doe", '1234')
-    jane = User.create("Jane doe", '12345jane')
-    peter = User.create("peter clark", '44peter.')
-    andrew = User.create("andrew clark", '12west')
-    
 
 seed_database()
+print("Seeded database")

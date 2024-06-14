@@ -1,184 +1,230 @@
-from Models.__init__ import CONN, CURSOR
+from Models.__init__ import CURSOR, CONN
 from Models.transaction import Transaction
-import sqlite3
-from Models.__init__ import CONN, CURSOR
+
+import datetime
 
 class Account:
+    all = {}
+    def __init__(self,account_type,user_id,asset_balance,account_id = None, ):
+        self.account_id = account_id
+        self.account_type = account_type
+        self.user_id = user_id
+        self.asset_balance = asset_balance
+        self.account_created= datetime.datetime.now()
 
-    def __init__(self, account_id=None, user_id=None, branch_id=None, account_type=None, account_balance=0):
-        self._account_id = account_id
-        self.user_id = user_id   # INT FK
-        self.branch_id = branch_id # INT FK
-        self.account_type = account_type # TEXT
-        self._account_balance = account_balance # FLOAT
-<<<<<<< HEAD
+       
         
+    #### properties
+    
+    @property
+    def account_type(self):
+        return self._account_type
+
+    @account_type.setter
+    def account_type(self, account_type):
+        if isinstance(account_type, str) and len(account_type):
+            self._account_type = account_type
+        else:
+            raise ValueError(
+                "account_type must be a non-empty string"
+            )
+
+    @property
+    def asset_balance(self):
+        return self._asset_balance
+
+    @asset_balance.setter
+    def asset_balance(self, asset_balance):
+        if isinstance(asset_balance, int)and asset_balance>5000: 
+            self._asset_balance = asset_balance
+        else:
+            print("deposit must be above 5000")
+            
+    @property
+    def user_id(self):
+        return self._user_id
+
+    @user_id.setter
+    def user_id(self, user_id):
+        if isinstance(user_id, int): 
+            self._user_id = int(user_id)
+          
+        else:
+            print(f"user id :{user_id}!")
+
+            
+    
+    ### CLASS MEHTODS
     @classmethod
     def create_table(cls):
-
+        """ Create a new table to persist the attributes of table instances """
         sql = """
             CREATE TABLE IF NOT EXISTS Accounts (
             account_id INTEGER PRIMARY KEY,
             account_type TEXT,
-            account_balance)
+            user_id INTEGER,
+            asset_balance INTEGER,
+            account_created DATETIME)
         """
         CURSOR.execute(sql)
         CONN.commit()
-
     @classmethod
     def drop_table(cls):
- 
+        """ Drop the table that persists Department instances """
         sql = """
-            DROP TABLE IF EXISTS users;
-        """
-        CURSOR.execute(sql)
-        CONN.commit()
-    def save(self):
-  
-        sql = """
-            INSERT INTO users (name, password)
-            VALUES (?, ?)
-        """
-
-        CURSOR.execute(sql, (self.name, self.password))
-        CONN.commit()
-
-        self.branch_id = CURSOR.lastrowid
-        type(self).all[self.branch_id] = self
-
-    @classmethod
-    def create(cls, name, password):
-        """ Initialize a new Department instance and save the object to the database """
-        branch = cls(name, password)
-        branch.save()
-        return branch
-
-
-    
-=======
-
->>>>>>> bdedd5ef9e3c96b5fdba8b298514190cc0ddcbdf
-    
-    @property
-    def account_balance(self):
-        return self._account_balance
-    
-    @property
-    def account_id(self):
-        return self._account_id
-    
-    @classmethod
-    def create_table(cls):
-        sql = """
-              CREATE TABLE IF NOT EXISTS accounts (
-              account_id INTEGER PRIMARY KEY AUTOINCREMENT,
-              user_id INTEGER,
-              branch_id INTEGER,
-              account_type TEXT,
-              account_balance FLOAT,
-              FOREIGN KEY (user_id) REFERENCES users(user_id),
-              FOREIGN KEY (branch_id) REFERENCES branches(branch_id))
+            DROP TABLE IF EXISTS Accounts;
         """
         CURSOR.execute(sql)
         CONN.commit()
 
-    @classmethod
-    def drop_table(cls):
+    ### crud methods
+      ## Open_account
+    def Open_account(self):
+
         sql = """
-            DROP TABLE IF EXISTS accounts;
+            INSERT INTO Accounts(account_type ,user_id,asset_balance,account_created)
+            VALUES (?, ?,? ,?)
         """
-        CURSOR.execute(sql)
+
+        CURSOR.execute(sql, (self.account_type, self.user_id,self.asset_balance,self.account_created))
         CONN.commit()
 
+        self.id = CURSOR.lastrowid
+        type(self).all[self.id] = self
+        Transaction.create_transaction(self.id,"credit","deposit", self.asset_balance)
     @classmethod
-    def save(cls, account):
-        if not account.account_id:
-            sql = """
-               INSERT INTO accounts (user_id, branch_id, account_type, account_balance)
-               VALUES (?,?,?,?)
-            """
-            CURSOR.execute(sql, (account.user_id, account.branch_id, account.account_type, account._account_balance))
-            CONN.commit()
-            account._account_id = CURSOR.lastrowid
+    def create_user_account(cls, account_type, user_id,deposit):
+        """ Initialize a new user bank account instance and save the object to the database """
+        user = cls(account_type,user_id, deposit)
+        user.Open_account()
+        return user
+
+################################## READ DATABASE
+## CHECK BALANCE
+    @classmethod
+    def instance_from_db(cls, row):
+        """Return a user object having the attribute values from the table row."""
+
+        # Check the dictionary for an existing instance using the row's primary key
+        account = cls.all.get(row[0])
+        print(type(row[0]))
+        if account:
+            # ensure attributes match row values in case local instance was modified
+            account.account_type = row[1]
+            account.user_id = row[2]
+            account.account_balance = row[3]
+            account.account_created = row[4]
         else:
-            sql = """
-                UPDATE accounts
-                SET user_id=?, branch_id=?, account_type=?, account_balance=?
-                WHERE account_id=?
-            """
-            CURSOR.execute(sql, (account.user_id, account.branch_id, account.account_type, account._account_balance, account.account_id))
-            CONN.commit()
-
-    @classmethod
-    def create(cls, user_id, branch_id, account_type, initial_balance):
-        account = cls(user_id=user_id, branch_id=branch_id, account_type=account_type, account_balance=initial_balance)
-        cls.save(account)
-        account.log_transaction('Deposit', initial_balance)
+            # not in dictionary, create new instance and add to dictionary
+            account = cls(row[1], row[2],row[3],row[4])
+            account.id = row[0]
+            cls.all[account.id] = account
         return account
+    ####### FIND BY ID
+    @classmethod
+    def find_by_id(cls, id):
+        sql = """
+            SELECT *
+            FROM Accounts
+            WHERE account_id = ?
+        """
+
+        row = CURSOR.execute(sql, (id,)).fetchone()
+        print(row)
+        return cls.instance_from_db(row) if row else None
+
+
+
+
+    @classmethod
+    def find_by_id(cls, id):
+        sql = """
+            SELECT *
+            FROM Accounts
+            WHERE account_id = ?
+        """
+
+        row = CURSOR.execute(sql, (id,)).fetchone()
+        print(row)
+        return cls.instance_from_db(row) if row else None
+
+####### deposit
+    def deposit(self,new_amount,deposit,id):
+        sql = """
+            UPDATE Accounts
+            SET asset_balance= ?
+            WHERE account_id = ?
+        """
+        CURSOR.execute(sql, (new_amount,id))
+        CONN.commit()
+        Transaction.create_transaction(self.id,"credit","deposit", deposit)
+####### withdraw
+    def withdraw(self,new_amount,deposit,id):
+        sql = """
+            UPDATE Accounts
+            SET asset_balance= ?
+            WHERE account_id = ?
+        """
+        CURSOR.execute(sql, (new_amount,id))
+        CONN.commit()
+        Transaction.create_transaction(self.id,"debit","withdraw", deposit)
+
     
     @classmethod
-    def get_by_id(cls, account_id):
-        """ Get an Account instance from the database by account_id. """
+    def Check_balance(cls,id):
+        """Return a user object corresponding to the table row matching the specified primary key"""
         sql = """
-            SELECT * FROM accounts WHERE account_id=?
+            SELECT *
+            FROM Accounts
+            WHERE account_id = ?
         """
-        CURSOR.execute(sql, (account_id,))
-        row = CURSOR.fetchone()
-        if row:
-            account = cls(account_id=row[0], user_id=row[1], branch_id=row[2], account_type=row[3], account_balance=row[4])
-            return account
+
+        row = CURSOR.execute(sql, (id,)).fetchone()
+        print(f" Your account balance is : {row[3]} Ksh Only")
+
+        return row[3]
+    
+################################################# UPDATE DATABASE
+    @classmethod
+    def create_deposit(cls,id):
+        """Return a user object corresponding to the table row matching the specified primary key"""
+        sql = """
+            SELECT *
+            FROM Accounts
+            WHERE account_id = ?
+        """
+
+        row = CURSOR.execute(sql, (id,)).fetchone()
+        print(f" Your account balance is : {row[3]} Ksh Only")
+
+        return cls.instance_from_db(row) if row else None
+
+
+################################################ DELETE FROM DATABASE
+    @classmethod
+    def apply_loan(cls, id,amount):
+        balance = cls.Check_balance(id)
+        limit = 0.60 * int(balance)
+        if int(amount) < int(limit):
+            print("approved")
+            if account := Account.find_by_id(id):
+                try:
+            
+                    account.asset_balance += int(amount)
+                    print(f"your previous balance was ->{account.asset_balance}")
+                    print(amount)
+                    account.deposit(account.asset_balance,int(amount),id)
+                    print(f'Success: {account}')
+                except Exception as exc:
+                    print("Error updating department: ", exc)
+            else:
+                print(f'Account {id} not found')
+            return True
         else:
-            return None
-
-    def deposit_account(self, amount):
-        if amount > 0:
-            self._account_balance += amount
-            self.log_transaction('Deposit', amount)
-            self.save()
-        else:
-            print(f"Invalid deposit amount: {amount}")
-
-    def withdraw_account(self, amount):
-        if amount <= self._account_balance:
-            self._account_balance -= amount
-            self.log_transaction('Withdrawal', amount)
-            self.save()
-            print(f'New balance: KSh{self._account_balance}')
-        else:
-            print(f"Invalid withdrawal amount: {amount}")
-
-    def transfer_account(self, target_account, amount):
-        if amount <= self._account_balance:
-            self._account_balance -= amount
-            target_account._account_balance += amount
-            self.log_transaction('Transfer Out', amount, target_account.account_id, target_account.user_id)
-            target_account.log_transaction('Transfer In', amount, self.account_id, self.user_id)
-            self.save()
-            target_account.save(target_account)
-            print(f'New balance: KSh{self._account_balance}')
-            print(f"Transfer of {amount} from account ID {self.account_id} to account ID {target_account.account_id} successful.")
-        else:
-            print(f"Insufficient balance to transfer {amount} from account ID {self.account_id}.")
-
-    def log_transaction(self, transaction_type, amount, target_account_id=None, target_user_id=None):
-        transaction = Transaction(
-            account_id=self._account_id,
-            user_id=self.user_id,
-            transaction_type=transaction_type,
-            amount=amount,
-            balance=self._account_balance,
-            target_account_id=target_account_id,
-            target_user_id=target_user_id
-        )
-        transaction.add_transaction()
+            print("denied")
+            return False
 
 
 
-    def display_account_info(self):
-        print(f"Account ID: {self.account_id}")
-        print(f"User ID: {self.user_id}")
-        print(f"Branch ID: {self.branch_id}")
-        print(f"Account Type: {self.account_type}")
-        print(f"Account Balance: {self.account_balance}")
 
-
+  
