@@ -10,28 +10,26 @@ def exit_program():
     print("Thank you for transacting with us")
     exit()
 
-# We'll implement the department functions in this lesson
-
 def create_user():
     name = input("Enter the user name > ")
-    password = input("Enter the password > ")
+    password = input("Enter the user password > ")
     branch_id = input("Enter the branch id > ")
     try:
         User.create_table()
         user = User.create_user_account(name,password,branch_id)
-        print(f'Success: {user}')
+        print(f'Successfully created user with ID: {user.user_id}')
     except Exception as exc:
-        print("Error creating user: ", exc)
+        print("Error creating user:", exc)
     pass
 ######################################## CREATE BANK ACCOUNT
 def create_bank_account ():
-    type = input("Enter the type of account (savings , checking) > ")
+    type = input("Enter the type of account (Savings , Checking) > ")
     user_id = input("Enter the user id > ")
     deposit = input("Enter your  first deposit > ")
 
     try:
-        Account.create_user_account(type,int(user_id),int(deposit))
-        print(f'Success !!!!!')
+        account = Account.create_user_account(type,int(user_id),int(deposit))
+        print(f'Successfully created account ID {account.account_id} for User {user_id}')
     except Exception as exc:
         print("Error creating account: ", exc)
 

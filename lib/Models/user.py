@@ -7,9 +7,7 @@ class User:
         self.user_id = user_id
         self.name = name
         self.password = password
-        self.branch_id = branch_id
-        
-        
+        self.branch_id = branch_id      
         
     #### properties
     
@@ -67,8 +65,8 @@ class User:
         CURSOR.execute(sql, (self.name, self.password,self.branch_id))
         CONN.commit()
 
-        self.id = CURSOR.lastrowid
-        type(self).all[self.id] = self
+        self.user_id = CURSOR.lastrowid
+        type(self).all[self.user_id] = self
 
         ##creating users
     @classmethod
@@ -94,8 +92,7 @@ class User:
         else:
             # not in dictionary, create new instance and add to dictionary
             user = cls(row[1], row[2],row[3])
-            user.id = row[0]
-            cls.all[user.id] = user
+            cls.all[user.user_id] = user
         return user
 
     ## search by id
@@ -108,6 +105,6 @@ class User:
             WHERE user_id = ?
         """
 
-        row = CURSOR.execute(sql, (id,)).fetchone()
+        row = CURSOR.execute(sql, (user_id,)).fetchone()
         print(row)
         return cls.instance_from_db(row) if row else None

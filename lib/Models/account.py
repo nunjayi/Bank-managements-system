@@ -89,15 +89,15 @@ class Account:
         CURSOR.execute(sql, (self.account_type, self.user_id,self.asset_balance,self.account_created))
         CONN.commit()
 
-        self.id = CURSOR.lastrowid
-        type(self).all[self.id] = self
-        Transaction.create_transaction(self.id,"credit","deposit", self.asset_balance)
+        self.account_id = CURSOR.lastrowid
+        type(self).all[self.account_id] = self
+        Transaction.create_transaction(self.account_id,"credit","deposit", self.asset_balance)
     @classmethod
     def create_user_account(cls, account_type, user_id,deposit):
         """ Initialize a new user bank account instance and save the object to the database """
-        user = cls(account_type,user_id, deposit)
-        user.Open_account()
-        return user
+        account = cls(account_type,user_id, deposit)
+        account.Open_account()
+        return account
 
 ################################## READ DATABASE
 ## CHECK BALANCE
@@ -117,8 +117,7 @@ class Account:
         else:
             # not in dictionary, create new instance and add to dictionary
             account = cls(row[1], row[2],row[3],row[4])
-            account.id = row[0]
-            cls.all[account.id] = account
+            cls.all[account.account_id] = account
         return account
     ####### FIND BY ID
     @classmethod
@@ -157,7 +156,7 @@ class Account:
         """
         CURSOR.execute(sql, (new_amount,id))
         CONN.commit()
-        Transaction.create_transaction(self.id,"credit","deposit", deposit)
+        Transaction.create_transaction(self.account_id,"credit","deposit", deposit)
 ####### withdraw
     def withdraw(self,new_amount,deposit,id):
         sql = """
@@ -167,7 +166,7 @@ class Account:
         """
         CURSOR.execute(sql, (new_amount,id))
         CONN.commit()
-        Transaction.create_transaction(self.id,"debit","withdraw", deposit)
+        Transaction.create_transaction(self.account_id,"debit","withdraw", deposit)
 
     
     @classmethod
