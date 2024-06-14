@@ -1,11 +1,12 @@
 from datetime import datetime
+import sqlite3
 from Models.__init__ import CONN, CURSOR
 from Models.account import Account
 from Models.transaction import Transaction
-class User:
-    all = {}
 
-    def __init__(self, name, password,user_id = None):
+class User:
+    def __init__(self, name, password, user_id=None):
+        self._user_id = user_id
         self.name = name
         self.password = password
         self.accounts = []
@@ -14,8 +15,7 @@ class User:
 
     @property
     def user_id(self):
-        return self._user_id
-    
+        return self._user_id    
 
     @classmethod
     def create_table(cls):
@@ -46,24 +46,31 @@ class User:
 
         CURSOR.execute(sql, (self.name, self.password))
         CONN.commit()
-
-        self.branch_id = CURSOR.lastrowid
-        type(self).all[self.branch_id] = self
+        self._user_id = CURSOR.lastrowid
 
     @classmethod
     def create(cls, name, password):
         """ Initialize a new Department instance and save the object to the database """
-        branch = cls(name, password)
-        branch.save()
-        return branch
-
-
-
+        user = cls(name, password)
+        user.save()
+        return user  
     
-    
+    @classmethod
+    def get_by_id(cls, user_id):
+        """ Get a User instance from the database """
+        sql = """
+            SELECT * FROM users WHERE user_id =?
+        """
+        CURSOR.execute(sql, (user_id,))
+        row = CURSOR.fetchone()
+        if row:
+            user = cls(row[1], row[2], row[0])
+            return user
+        else:
+            return None
 
     def open_account(self, account_type, initial_deposit):
-        account = Account(account_type, initial_deposit, self.user_id)
+        account = Account.create(self.user_id, branch_id=None, account_type=account_type, initial_balance=initial_deposit)
         self.accounts.append(account)
         print(f"Account with ID {account.account_id} and Account No {account.account_no} opened for {self.name} with balance {account.balance}")
 
