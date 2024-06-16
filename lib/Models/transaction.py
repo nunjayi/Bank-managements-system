@@ -130,7 +130,11 @@ class Transaction:
         """
         rows = CURSOR.execute(sql, (id,)).fetchall()
         for row in rows:
-            print(f"Transaction_id - > {row[0]} Account_id - >{row[1]} description - >{row[3]} Amount - >{row[4]} Date->{row[5]}")
+            print(f"Transaction ID: {row[0]}\n"
+                f"Account ID: {row[1]}\n"
+                f"Description: {row[3]}\n"
+                f"Amount: KSh{row[4]}\n"
+                f"Date: {row[5]}\n")
         return [cls.instance_from_db(row) for row in rows]
             
 ###############################################################
