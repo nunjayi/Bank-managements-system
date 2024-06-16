@@ -20,9 +20,7 @@ class User:
         if isinstance(name, str) and len(name):
             self._name = name
         else:
-            raise ValueError(
-                "name must be a non-empty string"
-            )
+            raise ValueError("name must be a non-empty string")
 
 
 
@@ -58,11 +56,11 @@ class User:
         Update object id attribute using the primary key value of new row.
         Save the object in local dictionary using table row's PK as dictionary key"""
         sql = """
-            INSERT INTO Users(name, password,branch_id)
+            INSERT INTO Users(name, password, branch_id)
             VALUES (?, ? ,?)
         """
 
-        CURSOR.execute(sql, (self.name, self.password,self.branch_id))
+        CURSOR.execute(sql, (self.name, self.password, self.branch_id))
         CONN.commit()
 
         self.user_id = CURSOR.lastrowid
@@ -74,30 +72,32 @@ class User:
         """ Initialize a new Employee instance and save the object to the database """
         user = cls(name, password, branch_id)
         user.create_user()
-        return user
-    
+        return user    
 
     ## reading elements(find from db)
     @classmethod
     def instance_from_db(cls, row):
         """Return a user object having the attribute values from the table row."""
+        user_id = row[0]
+        name = row[1]
+        password = row[2]
+        branch_id = row[3]
 
-        # Check the dictionary for an existing instance using the row's primary key
-        user = cls.all.get(row[0])
+        user = cls.all.get(user_id)
         if user:
             # ensure attributes match row values in case local instance was modified
-            user.name = row[1]
-            user.password = row[2]
-            user.Branch_id = row[3]
+            user.name = name
+            user.password = password
+            user.branch_id = branch_id
         else:
             # not in dictionary, create new instance and add to dictionary
-            user = cls(row[1], row[2],row[3])
-            cls.all[user.user_id] = user
+            user = cls(name, password, branch_id)
+            cls.all[user_id] = user
         return user
 
     ## search by id
     @classmethod
-    def find_by_id(cls, id):
+    def find_by_id(cls, user_id):
         """Return a user object corresponding to the table row matching the specified primary key"""
         sql = """
             SELECT *
